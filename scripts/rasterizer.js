@@ -21,6 +21,8 @@ var pageSettings = ['javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEn
 
 var server, service;
 
+var redirectUrl = '';
+
 server = require('webserver').create();
 
 /*
@@ -86,21 +88,31 @@ service = server.listen(port, function(request, response) {
     response.write('Error while parsing headers: ' + err.message);
     return response.close();
   }
+
+  page.onResourceReceived = function(resource) {
+    if (url == resource.url && resource.redirectURL) {
+      redirectURL = resource.redirectURL;
+    }
+  };
+
 	page.onError = function(msg, trace) {
 			console.log(msg);
 			trace.forEach(function(item) {
 					console.log('  ', item.file, ':', item.line);
 			});
 	}
+
   page.open(url, function(status) {
     if (status == 'success') {
       window.setTimeout(function () {
-        page.render(path);
+        page.render(path, { format: "jpg", quality: 30 });
+				response.statusCode = 200;
         response.write('Success: Screenshot saved to ' + path + "\n");
         page.release();
         response.close();
       }, delay);
     } else {
+			response.statusCode = 500;
       response.write('Error: Url returned status ' + status + "\n");
       page.release();
       response.close();

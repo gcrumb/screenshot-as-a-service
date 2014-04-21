@@ -24,7 +24,7 @@ module.exports = function(app, useCors) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
-    var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.png';
+    var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg'; // '.png';
     options.headers.filename = filename;
 
     var filePath = join(rasterizerService.getPath(), filename);
@@ -77,7 +77,7 @@ module.exports = function(app, useCors) {
   var callRasterizer = function(rasterizerOptions, callback) {
 		console.log("Calling: ", rasterizerOptions);
     request.get(rasterizerOptions, function(error, response, body) {
-			if (body.match(/Error:/)){
+			if (body && body.match(/Error:/)){
 				return callback(new Error(body));
 			}
       if (error || response.statusCode != 200) {

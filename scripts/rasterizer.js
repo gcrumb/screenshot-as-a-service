@@ -86,6 +86,12 @@ service = server.listen(port, function(request, response) {
     response.write('Error while parsing headers: ' + err.message);
     return response.close();
   }
+	page.onError = function(msg, trace) {
+			console.log(msg);
+			trace.forEach(function(item) {
+					console.log('  ', item.file, ':', item.line);
+			});
+	}
   page.open(url, function(status) {
     if (status == 'success') {
       window.setTimeout(function () {

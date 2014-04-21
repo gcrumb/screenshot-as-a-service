@@ -11,7 +11,7 @@ module.exports = function(app, useCors) {
   // routes
   app.get('/', function(req, res, next) {
     if (!req.param('url', false)) {
-      return res.redirect('/usage.html');
+      return res.redirect('usage.html');
     }
 
     var url = utils.url(req.param('url'));
@@ -75,7 +75,11 @@ module.exports = function(app, useCors) {
   }
 
   var callRasterizer = function(rasterizerOptions, callback) {
+		console.log("Calling: ", rasterizerOptions);
     request.get(rasterizerOptions, function(error, response, body) {
+			if (body.match(/Error:/)){
+				return callback(new Error(body));
+			}
       if (error || response.statusCode != 200) {
         console.log('Error while requesting the rasterizer: %s', error.message);
         rasterizerService.restartService();
@@ -107,6 +111,10 @@ module.exports = function(app, useCors) {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Expose-Headers", "Content-Type");
     }
+		if (!fs.existsSync(imagePath)){
+				console.log("File does not exist! ", imagePath);
+				return;
+		}
     res.sendfile(imagePath, function(err) {
       fileCleanerService.addFile(imagePath);
       callback(err);

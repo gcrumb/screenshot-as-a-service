@@ -24,6 +24,7 @@ module.exports = function(app, useCors) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
+		var preview_unavailable = 'preview-unavailable.png';
     var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg'; // '.png';
     options.headers.filename = filename;
 
@@ -62,13 +63,19 @@ module.exports = function(app, useCors) {
       // asynchronous
       res.send('Will post screenshot to ' + url + ' when processed');
       callRasterizer(rasterizerOptions, function(error) {
-        if (error) return callback(error);
+        if (error) {
+						postImageToUrl(preview_unavailable, url, callback);
+						return callback(error);
+				}
         postImageToUrl(filePath, url, callback);
       });
     } else {
       // synchronous
       callRasterizer(rasterizerOptions, function(error) {
-        if (error) return callback(error);
+        if (error) {
+						sendImageInResponse(preview_unavailable, res, callback);
+						return callback(error);
+				}
         sendImageInResponse(filePath, res, callback);
       });
     }

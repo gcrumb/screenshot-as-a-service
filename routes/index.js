@@ -90,6 +90,7 @@ module.exports = function(app, useCors) {
 		console.log("Calling: ", rasterizerOptions);
     request.get(rasterizerOptions, function(error, response, body) {
 			if (body && body.match(/Error:/)){
+				console.log('BODY: ', body);
 				return callback(new Error(body));
 			}
       if (error || response.statusCode != 200) {

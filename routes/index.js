@@ -5,10 +5,12 @@ var path    = require('path');
 var request = require('request');
 var sizer   = require('easyimage');
 
-var imgSize = 1311;
+var dirPath = __dirname.split('/');
+dirPath.pop();
+var preview_unavailable = dirPath.join('/') + '/public/preview-unavailable.png';
+//console.log("Failsafe: ", preview_unavailable);
 
-console.log(__dirname);
-var preview_unavailable = __dirname + '/../public/preview-unavailable.png';
+var imgSize = 1311; // Magic number - move to config before we're done.
 
 module.exports = function(app, useCors) {
   var rasterizerService = app.settings.rasterizerService;
@@ -32,7 +34,7 @@ module.exports = function(app, useCors) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
-		imgSize = req.param('imgSize', false) ? req.param('imgSize') : imgSize;
+		imgSize = req.param('imgSize', false) ? req.param('imgSize') : 1311; //FIXME
 
     var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg'; // '.png';
     options.headers.filename = filename;
@@ -153,13 +155,15 @@ module.exports = function(app, useCors) {
 
 	var resizeImage = function(imagePath, x, res, callback){
 
-			if (imagePath.match(preview_unavailable)) {
+			if (imagePath === preview_unavailable) {
 					res.sendfile(imagePath, function(err) {
 							if (err){
 									console.log("Can't send file " + imagePath, err);
 									callback(err);
 							}
 					});
+					
+					return;
 			}
 
 			var thumbnail = join(rasterizerService.getPath(), path.basename(imagePath, '.jpg')) + '_' + x + '.jpg';

@@ -100,9 +100,9 @@ service = server.listen(port, function(request, response) {
 	});
 
 	page.onError = function(msg, trace) {
-			console.log(msg);
+			console.log('Uh-oh',msg);
 			trace.forEach(function(item) {
-					console.log('  ', item.file, ':', item.line);
+					console.log('Uh-oh', item.file, ':', item.line);
 			});
 	}
 

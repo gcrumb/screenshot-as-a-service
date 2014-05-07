@@ -5,11 +5,13 @@ var path    = require('path');
 var request = require('request');
 var sizer   = require('easyimage');
 
-var preview_unavailable = '../public/preview-unavailable.png';
+var preview_unavailable = 'public/preview-unavailable.png';
 
 module.exports = function(app, useCors) {
   var rasterizerService = app.settings.rasterizerService;
   var fileCleanerService = app.settings.fileCleanerService;
+
+	var options = {};
 
   // routes
   app.get('/', function(req, res, next) {
@@ -19,7 +21,7 @@ module.exports = function(app, useCors) {
 
     var url = utils.url(req.param('url'));
     // required options
-    var options = {
+    options = {
       uri: 'http://localhost:' + rasterizerService.getPort() + '/',
       headers: { url: url }
     };
@@ -88,7 +90,10 @@ module.exports = function(app, useCors) {
 				return callback(new Error(body));
 			}
       if (error || response.statusCode != 200) {
-				var msg = error !== 'undefined' ? error.message : response.statusCode;
+				var msg = response.statusCode; //= error !== 'undefined' ? error.message : response.statusCode;
+				if (typeof error !== 'undefined'){
+						console.log('ERR: ', error);
+				}
         console.log('Error while requesting the rasterizer: %s', msg);
         rasterizerService.restartService();
         return callback(new Error(body));
@@ -123,14 +128,17 @@ module.exports = function(app, useCors) {
 				console.log("File does not exist! ", imagePath);
 				return;
 		}
-    res.sendfile(resizeImage(imagePath), function(err) {
+    res.sendfile(resizeImage(imagePath, options.headers['imgSize']), function(err) {
       fileCleanerService.addFile(imagePath);
       callback(err);
     });
   }
 
-	var resizeImage = function(imagePath, x, y){
-			var thumbnail = path.basename(imagePath, '.jpg') + '_' + x + '_' + y + '.jpg';
+	var resizeImage = function(imagePath, x){
+			if (imagePath.match(preview_unavailable)) {
+					return imagePath;
+			}
+			var thumbnail = path.basename(imagePath, '.jpg') + '_' + x + '.jpg';
 			console.log (thumbnail);
 
 			if (fs.existsSync(thumbnail)){

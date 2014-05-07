@@ -12,6 +12,7 @@ module.exports = function(app, useCors) {
   var fileCleanerService = app.settings.fileCleanerService;
 
 	var options = {};
+	var imgSize = 1311;
 
   // routes
   app.get('/', function(req, res, next) {
@@ -25,9 +26,11 @@ module.exports = function(app, useCors) {
       uri: 'http://localhost:' + rasterizerService.getPort() + '/',
       headers: { url: url }
     };
-    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'imgSize'].forEach(function(name) {
+    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
+
+		imgSize = req.param('imgSize', false) ? req.param('imgSize') : imgSize;
 
     var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg'; // '.png';
     options.headers.filename = filename;

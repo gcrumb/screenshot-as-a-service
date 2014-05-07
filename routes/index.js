@@ -1,8 +1,11 @@
-var utils = require('../lib/utils');
-var join = require('path').join;
-var fs = require('fs');
-var path = require('path');
+var utils   = require('../lib/utils');
+var join    = require('path').join;
+var fs      = require('fs');
+var path    = require('path');
 var request = require('request');
+var sizer   = require('easyimage');
+
+var preview_unavailable = '../public/preview-unavailable.png';
 
 module.exports = function(app, useCors) {
   var rasterizerService = app.settings.rasterizerService;
@@ -20,11 +23,10 @@ module.exports = function(app, useCors) {
       uri: 'http://localhost:' + rasterizerService.getPort() + '/',
       headers: { url: url }
     };
-    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay'].forEach(function(name) {
+    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'imgSize'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
-		var preview_unavailable = 'preview-unavailable.png';
     var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg'; // '.png';
     options.headers.filename = filename;
 
@@ -65,7 +67,6 @@ module.exports = function(app, useCors) {
       callRasterizer(rasterizerOptions, function(error) {
         if (error) {
 						postImageToUrl(preview_unavailable, url, callback);
-						return callback(error);
 				}
         postImageToUrl(filePath, url, callback);
       });
@@ -74,7 +75,6 @@ module.exports = function(app, useCors) {
       callRasterizer(rasterizerOptions, function(error) {
         if (error) {
 						sendImageInResponse(preview_unavailable, res, callback);
-						return callback(error);
 				}
         sendImageInResponse(filePath, res, callback);
       });
@@ -88,7 +88,8 @@ module.exports = function(app, useCors) {
 				return callback(new Error(body));
 			}
       if (error || response.statusCode != 200) {
-        console.log('Error while requesting the rasterizer: %s', error.message);
+				var msg = error !== 'undefined' ? error.message : response.statusCode;
+        console.log('Error while requesting the rasterizer: %s', msg);
         rasterizerService.restartService();
         return callback(new Error(body));
       }
@@ -103,7 +104,7 @@ module.exports = function(app, useCors) {
       fileCleanerService.addFile(imagePath);
     });
     fileStream.on('error', function(err){
-      console.log('Error while reading file: %s', err.message);
+      console.log('Error while reading file: %s', err);
       callback(err);
     });
     fileStream.pipe(request.post(url, function(err) {
@@ -122,10 +123,30 @@ module.exports = function(app, useCors) {
 				console.log("File does not exist! ", imagePath);
 				return;
 		}
-    res.sendfile(imagePath, function(err) {
+    res.sendfile(resizeImage(imagePath), function(err) {
       fileCleanerService.addFile(imagePath);
       callback(err);
     });
   }
+
+	var resizeImage = function(imagePath, x, y){
+			var thumbnail = path.basename(imagePath, '.jpg') + '_' + x + '_' + y + '.jpg';
+			console.log (thumbnail);
+
+			if (fs.existsSync(thumbnail)){
+					console.log(thumbnail + " exists.");
+					return thumbnail;
+			}
+
+			// try using only the width param for now...
+			var imgParams = {src:imagePath, dst:thumbnail, width:x};
+
+			sizer.resize(imgParams, function(err, stdout, stderr) {
+					if (err) throw err;
+					console.log('Resized to width: ' + x);
+					return thumbnail;
+			});
+
+	}
 
 };

@@ -85,7 +85,7 @@ service = server.listen(port, function(request, response) {
     }
   } catch (err) {
     response.statusCode = 500;
-    response.write('Error while parsing headers: ' + err.message);
+    response.write('Error while parsing headers: ' , err);
     return response.close();
   }
 
@@ -94,6 +94,10 @@ service = server.listen(port, function(request, response) {
       redirectURL = resource.redirectURL;
     }
   };
+
+	page.evaluate(function() {
+			document.body.bgColor = 'white';
+	});
 
 	page.onError = function(msg, trace) {
 			console.log(msg);

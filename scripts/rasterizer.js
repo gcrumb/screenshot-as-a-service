@@ -96,7 +96,21 @@ service = server.listen(port, function(request, response) {
   };
 
 	page.evaluate(function() {
-			document.body.bgColor = 'white';
+
+			// See: http://www.netlobo.com/javascript-insertafter.html
+			var insertAfter = function( referenceNode, newNode )
+			{
+					console.log("NODE: ", referenceNode);
+					referenceNode.parentNode.insertBefore( newNode, referenceNode.nextSibling );
+			}
+
+			var style = document.createElement('style');
+			var text = document.createTextNode('body { background: #fff }');
+
+			style.setAttribute('type', 'text/css');
+			style.appendChild(text);
+			//insertAfter(style, document.head.firstChild);
+			document.head.insertBefore(style, document.head.lastChild);
 	});
 
 	page.onError = function(msg, trace) {

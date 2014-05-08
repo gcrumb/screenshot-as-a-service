@@ -100,7 +100,7 @@ module.exports = function(app, useCors) {
 				return callback(new Error(body));
 			}
       if (error || response.statusCode != 200) {
-				var msg = response.statusCode; //= error !== 'undefined' ? error.message : response.statusCode;
+				var msg = (typeof error !== 'undefined' && error) ? error.message : response.statusCode;
 				if (typeof error !== 'undefined'  && error){
 						console.log('ERR: ', error);
 				}
